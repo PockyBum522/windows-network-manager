@@ -19,8 +19,8 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty] private SessionPersistentState? _localSessionPersistentState;
     
     private readonly ILogger _logger;
-
-    private static int _profileSetCount = 0;
+    private readonly NetworkAdaptersManager _networkAdaptersManager;
+    private readonly UserTextDialogPrompter _userTextDialogPrompter;
 
     /// <summary>
     /// Constructor for dependency injection
@@ -29,15 +29,21 @@ public partial class MainWindowViewModel : ObservableObject
     /// <param name="sessionPersistentState">The main state of the application and user's choices that persists after a reboot</param>
     public MainWindowViewModel(
         ILogger logger,
-        SessionPersistentState sessionPersistentState
-        )
+        SessionPersistentState sessionPersistentState,
+        NetworkAdaptersManager networkAdaptersManager,
+        UserTextDialogPrompter userTextDialogPrompter
+    )
     {
         _logger = logger;
         _localSessionPersistentState = sessionPersistentState;
+        _networkAdaptersManager = networkAdaptersManager;
+        _userTextDialogPrompter = userTextDialogPrompter;
     }
 
     private AdaptersProfileSet? GetProfileByName(string profileName)
     {
+        if (LocalSessionPersistentState is null) throw new NullReferenceException();
+
         foreach (var profile in LocalSessionPersistentState.NetworkProfilesSection)
         {
             if (profile.ProfileName == profileName)
@@ -46,194 +52,82 @@ public partial class MainWindowViewModel : ObservableObject
 
         return null;
     }
-    
+
     [RelayCommand]
     private void CreateNewProfile()
     {
-        _profileSetCount++;
+        if (LocalSessionPersistentState is null) throw new NullReferenceException();
+        
+        LocalSessionPersistentState.ProfileCreationCounter++;
 
         var profile = new AdaptersProfileSet()
         {
-            ProfileName = $"Profile {_profileSetCount}"
+            ProfileName = $"Profile {LocalSessionPersistentState.ProfileCreationCounter}"
         };
 
-        foreach (var adapterName in GetSystemAdapters())
+        foreach (var adapterName in _networkAdaptersManager.GetSystemAdapters())
         {
             profile.ProfileSet.Add(
                 new NetworkAdapterChange()
                 {
                     Name = adapterName
-                });    
+                });
         }
 
         if (LocalSessionPersistentState is null) throw new NullReferenceException();
-        
+
         LocalSessionPersistentState.NetworkProfilesSection.Add(profile);
     }
-    
+
     [RelayCommand]
     private void ActivateProfile(object? profileNameToDelete)
     {
         var convertedProfileName = ((string?)profileNameToDelete) ?? "";
-        
+
         var profile = GetProfileByName(convertedProfileName);
 
         if (profile is null) throw new NullReferenceException();
         if (LocalSessionPersistentState is null) throw new NullReferenceException();
-        
+
         // Work the bools
+
+        foreach (var networkAdapterChange in profile.ProfileSet)
+        {
+            if (networkAdapterChange.TaskIsDisable)
+                _networkAdaptersManager.SetNetworkAdapterState(networkAdapterChange.Name, false);
+            
+            if (networkAdapterChange.TaskIsEnable)
+                _networkAdaptersManager.SetNetworkAdapterState(networkAdapterChange.Name, true);
+        }
     }
-    
+
     [RelayCommand]
     private void RenameProfile(object? profileNameToDelete)
     {
         var convertedProfileName = ((string?)profileNameToDelete) ?? "";
-        
+
         var profile = GetProfileByName(convertedProfileName);
 
         if (profile is null) throw new NullReferenceException();
         if (LocalSessionPersistentState is null) throw new NullReferenceException();
 
-        var userResponse = UserTextDialogPrompter.GetTextFromUser("New Profile Name", "Please enter what you would like to rename the profile to:");
-        
+        var userResponse = _userTextDialogPrompter.GetTextFromUser("New Profile Name",
+            "Please enter what you would like to rename the profile to:");
+
         if (!string.IsNullOrEmpty(userResponse))
             profile.ProfileName = userResponse;
     }
-    
+
     [RelayCommand]
     private void DeleteProfile(object? profileNameToDelete)
     {
         var convertedProfileName = ((string?)profileNameToDelete) ?? "";
-        
+
         var profile = GetProfileByName(convertedProfileName);
 
         if (profile is null) throw new NullReferenceException();
         if (LocalSessionPersistentState is null) throw new NullReferenceException();
-        
+
         LocalSessionPersistentState.NetworkProfilesSection.Remove(profile);
-    }
-    
-    private List<string> GetSystemAdapters()
-    {
-        var networkConnections = new List<string>();
-        var query = "SELECT * FROM Win32_NetworkAdapter WHERE NetConnectionStatus IS NOT NULL";
-
-        using var searcher = new ManagementObjectSearcher(query);
-        
-        foreach (ManagementObject networkAdapter in searcher.Get())
-        {
-            var connectionName = networkAdapter["NetConnectionID"]?.ToString();
-            if (!string.IsNullOrEmpty(connectionName))
-            {
-                networkConnections.Add(connectionName);
-            }
-        }
-
-        return networkConnections;
-    }
-
-    private void LoadDummyAdaptersData()
-    {
-        var profile01 = new AdaptersProfileSet()
-        {
-            ProfileName = "Enable WiFi"
-        };
-        
-        profile01.ProfileSet.Add(
-            new NetworkAdapterChange()
-            {
-                TaskIsEnable = true,
-                Name = "Test Adapter 1"
-            });
-        
-        profile01.ProfileSet.Add(
-            new NetworkAdapterChange()
-            {
-                Name = "Test Adapter 2"
-            });
-        
-        profile01.ProfileSet.Add(
-            new NetworkAdapterChange()
-            {
-                Name = "Test Adapter 3"
-            });
-        
-        profile01.ProfileSet.Add(
-            new NetworkAdapterChange()
-            {
-                TaskIsEnable = true,
-                Name = "Test Adapter 4"
-            });
-
-        var profile02 = new AdaptersProfileSet(){
-            ProfileName = "Enable Ethernet"
-        };
-        
-        profile02.ProfileSet.Add(
-            new NetworkAdapterChange()
-            {
-                Name = "Test Adapter 1"
-            });
-        
-        profile02.ProfileSet.Add(
-            new NetworkAdapterChange()
-            {
-                TaskIsEnable = true,
-                Name = "Test Adapter 2"
-            });
-        
-        profile02.ProfileSet.Add(
-            new NetworkAdapterChange()
-            {
-                TaskIsEnable = true,
-                Name = "Test Adapter 3"
-            });
-        
-        profile02.ProfileSet.Add(
-            new NetworkAdapterChange()
-            {
-                
-                Name = "Test Adapter 4"
-            });
-
-        var profile03 = new AdaptersProfileSet()
-        {
-            ProfileName = "Disable All"
-        };
-        
-        profile03.ProfileSet.Add(
-            new NetworkAdapterChange()
-            {
-                
-                Name = "Test Adapter 1"
-            });
-        
-        profile03.ProfileSet.Add(
-            new NetworkAdapterChange()
-            {
-                
-                Name = "Test Adapter 2"
-            });
-        
-        profile03.ProfileSet.Add(
-            new NetworkAdapterChange()
-            {
-                
-                Name = "Test Adapter 3"
-            });
-        
-        profile03.ProfileSet.Add(
-            new NetworkAdapterChange()
-            {
-                
-                Name = "Test Adapter 4"
-            });
-
-        if (LocalSessionPersistentState is null) throw new NullReferenceException();
-
-        LocalSessionPersistentState.NetworkProfilesSection.Add(profile01);
-        LocalSessionPersistentState.NetworkProfilesSection.Add(profile02);
-        LocalSessionPersistentState.NetworkProfilesSection.Add(profile03);
-        
     }
 }

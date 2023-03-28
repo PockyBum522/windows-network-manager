@@ -3,9 +3,9 @@ using System.Windows.Controls;
 
 namespace WindowsNetworkManager.Core.Logic.UiHelpers;
 
-public static class UserTextDialogPrompter
+public class UserTextDialogPrompter
 {
-    public static string GetTextFromUser(string title, string body = "")
+    public string GetTextFromUser(string title, string body = "")
     {
         if (string.IsNullOrWhiteSpace(body))
             body = title;

@@ -9,6 +9,7 @@ using Newtonsoft.Json;
 using Serilog;
 using WindowsNetworkManager.Core;
 using WindowsNetworkManager.Core.Logic.Application;
+using WindowsNetworkManager.Core.Logic.UiHelpers;
 using WindowsNetworkManager.Core.Models;
 using WindowsNetworkManager.UI.WindowResources.MainWindow;
 
@@ -75,12 +76,10 @@ public class DiContainerBuilder
         
         RegisterMainDependencies();
 
-        RegisterTaskHelpers();
+        RegisterApplicationLogic();
 
         RegisterMainWindowLoaders();
 
-        RegisterSectionBuilders();
-        
         RegisterUiDependencies();
 
         var container = _builder.Build();
@@ -176,26 +175,22 @@ public class DiContainerBuilder
         
     }
 
-    [SupportedOSPlatform("Windows7.0")]
-    private void RegisterTaskHelpers()
+    private void RegisterApplicationLogic()
     {
+        _builder.RegisterType<NetworkAdaptersManager>().AsSelf().SingleInstance();
     }
-
+    
     [SupportedOSPlatform("Windows7.0")]
     private void RegisterMainWindowLoaders()
     {
-    }
-
-    [SupportedOSPlatform("Windows7.0")]
-    private void RegisterSectionBuilders()
-    {
-        
     }
     
     [SupportedOSPlatform("Windows7.0")]
     private void RegisterUiDependencies()
     {
         _builder.RegisterInstance(Dispatcher.CurrentDispatcher).AsSelf().SingleInstance();
+        
+        _builder.RegisterType<UserTextDialogPrompter>().AsSelf().SingleInstance();
         
         _builder.RegisterType<MainWindowViewModel>().AsSelf().SingleInstance();
         _builder.RegisterType<MainWindow>().AsSelf().SingleInstance();

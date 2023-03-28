@@ -9,4 +9,6 @@ namespace WindowsNetworkManager.Core.Models;
 public partial class SessionPersistentState : ObservableObject
 {
     [ObservableProperty] private ObservableCollection<AdaptersProfileSet> _networkProfilesSection = new();
+    
+    public int ProfileCreationCounter { get; set; }
 }
