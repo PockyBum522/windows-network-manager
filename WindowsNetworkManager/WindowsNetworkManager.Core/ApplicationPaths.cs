@@ -8,17 +8,19 @@ namespace WindowsNetworkManager.Core
     /// </summary>
     public static class ApplicationPaths
     {
+        private static string ApplicationDataBasePath =>
+            Path.Join(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "Windows Network Manager");
+        
         /// <summary>
         /// Per-user log folder path
         /// </summary>
         private static string LogAppBasePath =>
             Path.Combine(
-                "C:",
-                "Users",
-                "Public",
-                "Documents",
+                ApplicationDataBasePath,
                 "Logs",
-                "WorkstationSetupScript");
+                "Windows Network Manager");
 
         /// <summary>
         /// Actual log file path passed to the ILogger configuration
@@ -26,7 +28,7 @@ namespace WindowsNetworkManager.Core
         public static string LogPath =>
             Path.Combine(
                 LogAppBasePath,
-                "Script.log");
+                "WindowsNetworkManager.log");
         
         /// <summary>
         /// The directory the assembly is running from
@@ -34,15 +36,6 @@ namespace WindowsNetworkManager.Core
         public static string ThisApplicationRunFromDirectoryPath => 
             Path.GetDirectoryName(Environment.ProcessPath) ?? "";
 
-        /// <summary>
-        /// The top level dir, useful for getting to configuration folders and resource folders
-        /// This is the directory the bootstrapper bat file is in
-        /// </summary>
-        public static string SetupAssistantRootDir => 
-            Path.GetFullPath(
-                Path.Join(
-                    ThisApplicationRunFromDirectoryPath, "../../../../.."));
-        
         /// <summary>
         /// The full path to this application's running assembly
         /// </summary>
@@ -63,34 +56,10 @@ namespace WindowsNetworkManager.Core
         /// Where to put the JSON file representing what state the setup is in, state is based on user selection in
         /// MainWindow
         /// </summary>
-        public static string StatePath => @"C:\Users\Public\Documents\CSharpInstallerScriptState.json";
+        public static string StatePath => Path.Join(
+            ApplicationDataBasePath,
+            "Settings",
+            "Windows Network Manager Profiles.json");
 
-        /// <summary>
-        /// Contains paths specific to resources such as JSON files, configuration files
-        /// </summary>
-        public static class ResourcePaths
-        {
-            /// <summary>
-            /// Path to the file containing all information about available installers to show in main window on load
-            /// </summary>
-            public static string InstallsFileJsonPath =>
-                Path.GetFullPath(
-                    Path.Join(
-                        SetupAssistantRootDir,
-                        "Resources",
-                        "Configuration",
-                        "Available Installs.json"));
-            
-            /// <summary>
-            /// Path to the file containing all information about available installers to show in main window on load
-            /// </summary>
-            public static string ResourceDirectoryRegistryFiles =>
-                Path.GetFullPath(
-                    Path.Join(
-                        SetupAssistantRootDir,
-                        "Resources",
-                        "Configuration",
-                        "Registry Files"));
-        }
     }
 }
