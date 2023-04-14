@@ -8,7 +8,7 @@ namespace WindowsNetworkManager.Core
     /// </summary>
     public static class ApplicationPaths
     {
-        private static string ApplicationDataBasePath =>
+        private static string ApplicationBaseDataPath =>
             Path.Join(
                 Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
                 "Windows Network Manager");
@@ -18,9 +18,18 @@ namespace WindowsNetworkManager.Core
         /// </summary>
         private static string LogAppBasePath =>
             Path.Combine(
-                ApplicationDataBasePath,
-                "Logs",
-                "Windows Network Manager");
+                ApplicationBaseDataPath,
+                "Logs");
+        
+        /// <summary>
+        /// Where to put the JSON file representing what state the setup is in, state is based on user selection in
+        /// MainWindow
+        /// </summary>
+        public static string StatePath => Path.Join(
+            ApplicationBaseDataPath,
+            "Settings",
+            "Profiles.json");
+
 
         /// <summary>
         /// Actual log file path passed to the ILogger configuration
@@ -28,18 +37,18 @@ namespace WindowsNetworkManager.Core
         public static string LogPath =>
             Path.Combine(
                 LogAppBasePath,
-                "WindowsNetworkManager.log");
+                "NetworkManager.log");
         
         /// <summary>
         /// The directory the assembly is running from
         /// </summary>
-        public static string ThisApplicationRunFromDirectoryPath => 
+        public static string ApplicationRunFromDirectoryPath => 
             Path.GetDirectoryName(Environment.ProcessPath) ?? "";
 
         /// <summary>
         /// The full path to this application's running assembly
         /// </summary>
-        public static string ThisApplicationProcessPath => 
+        public static string ApplicationProcessPath => 
             Environment.ProcessPath ?? "";
 
         /// <summary>
@@ -47,19 +56,10 @@ namespace WindowsNetworkManager.Core
         /// </summary>
         public static string DarkThemePath =>
                 Path.Join(
-                    ThisApplicationRunFromDirectoryPath,
+                    ApplicationRunFromDirectoryPath,
                     "Themes",
                     "SelenMetroDark",
                     "Styles.xaml");
-
-        /// <summary>
-        /// Where to put the JSON file representing what state the setup is in, state is based on user selection in
-        /// MainWindow
-        /// </summary>
-        public static string StatePath => Path.Join(
-            ApplicationDataBasePath,
-            "Settings",
-            "Windows Network Manager Profiles.json");
 
     }
 }

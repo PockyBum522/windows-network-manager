@@ -52,7 +52,7 @@ ECHO Next >> ""%temp%\OEgetPriv_batchScriptV01.vbs""
 ECHO UAC.ShellExecute ""!batchPath!"", args, """", ""runas"", 1 >> ""%temp%\OEgetPriv_batchScriptV01.vbs""
 
 : Now run the file we just made
-powershell start '{ApplicationPaths.ThisApplicationProcessPath}' ""%temp%\OEgetPriv_batchScriptV01.vbs""
+powershell start '{ApplicationPaths.ApplicationProcessPath}' ""%temp%\OEgetPriv_batchScriptV01.vbs""
 ";
 
         File.WriteAllText(startupBatPath, batchFileContents);
